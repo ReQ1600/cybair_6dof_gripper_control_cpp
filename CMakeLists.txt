@@ -8,10 +8,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
 find_package(std_msgs REQUIRED)
 
 add_executable(teleop_gripper_key src/teleop_gripper_key.cpp)
-ament_target_dependencies(teleop_gripper_key rclcpp std_msgs)
 
 add_executable(listener src/listener.cpp)
 ament_target_dependencies(listener rclcpp std_msgs)
@@ -20,11 +20,23 @@ target_include_directories(teleop_gripper_key PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(teleop_gripper_key PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+ament_target_dependencies(
+  teleop_gripper_key
+  "rclcpp" 
+  "std_msgs"
+  "moveit_ros_planning_interface"
+  )
 
 install(TARGETS 
   teleop_gripper_key
   listener
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
