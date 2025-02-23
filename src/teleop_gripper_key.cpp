@@ -25,7 +25,7 @@ public:
   TeleopGripperKey() : rclcpp::Node("teleop_gripper_key",   rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
   {
     publisher_ = this->create_publisher<std_msgs::msg::Float64>("grip_angle", 10);
-    timer_ = this->create_wall_timer(20ms, std::bind(&TeleopGripperKey::loop, this));
+    timer_ = this->create_wall_timer(200ms, std::bind(&TeleopGripperKey::loop, this));
   }
 
   void SetupNode();
@@ -47,11 +47,11 @@ void TeleopGripperKey::loop()
   bool publish = false;
 
   char c;
-  if(::read(STDIN_FILENO, &c, 1) < 0)
-  {
-    RCLCPP_ERROR(this->get_logger(), "read() error");
-    exit(-1);
-  }
+  // if(::read(STDIN_FILENO, &c, 1) < 0)
+  // {
+  //   RCLCPP_ERROR(this->get_logger(), "read() error");
+  //   exit(-1);
+  // }
 
   RCLCPP_ERROR(this->get_logger(), "IM ALIVE");
 
@@ -66,28 +66,34 @@ void TeleopGripperKey::loop()
     publish = true;
     break;
   }
-  if (publish)
+  //if (true)
   {
-    // auto msg = std_msgs::msg::Float64();
-    // msg.data = angle_;
-    // publisher_->publish(msg);
-    // RCLCPP_INFO(this->get_logger(), "message published");
+    const moveit::core::JointModelGroup* jmg = move_group_interface_->getCurrentState()->getJointModelGroup("panda_arm");
+    moveit::core::RobotStatePtr current_state = move_group_interface_->getCurrentState(10);
+    std::vector<double> joints;
+    current_state->copyJointGroupPositions(jmg, joints);
+    angle_ = joints[1];
 
-    std::vector<double> joint_vals = move_group_interface_->getCurrentJointValues();
+    auto msg = std_msgs::msg::Float64();
+    msg.data = angle_;
+    publisher_->publish(msg);
+    RCLCPP_INFO(this->get_logger(), "message published\n %f, %f, %f", joints[1], joints[2], joints[3]);
+
+    // std::vector<double> joint_vals = move_group_interface_->getCurrentJointValues();
     
-    joint_vals[GRIPPER_JOINT_INDEX] = angle_;
+    // joint_vals[GRIPPER_JOINT_INDEX] = angle_;
 
-    move_group_interface_->setJointValueTarget(joint_vals);
-    moveit::planning_interface::MoveGroupInterface::Plan plan;
-    if (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS)
-    {
-      move_group_interface_->execute(plan);
-      RCLCPP_INFO(this->get_logger(), "moving joint %d [gripper] to %f position", GRIPPER_JOINT_INDEX, angle_);
-    }
-    else
-    {
-      RCLCPP_ERROR(this->get_logger(), "moving joint %d [gripper] to %f position plan FAILED", GRIPPER_JOINT_INDEX, angle_);
-    }
+    // move_group_interface_->setJointValueTarget(joint_vals);
+    // moveit::planning_interface::MoveGroupInterface::Plan plan;
+    // //if (move_group_interface_->plan(plan) == moveit::core::MoveItErrorCode::SUCCESS)
+    // {
+    //   //move_group_interface_->execute(plan);
+    //   RCLCPP_INFO(this->get_logger(), "moving joint %d [gripper] to %f position", GRIPPER_JOINT_INDEX, joint_vals[1]);
+    // }
+    // else
+    // {
+    //   RCLCPP_ERROR(this->get_logger(), "moving joint %d [gripper] to %f position plan FAILED", GRIPPER_JOINT_INDEX, angle_);
+    // }
 
     publish = false;
     //clears input buffer
@@ -101,9 +107,7 @@ void TeleopGripperKey::loop()
 void TeleopGripperKey::SetupNode()
 {
   move_group_interface_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(shared_from_this(), "panda_arm");//panda arm for tests only
-  angle_ = move_group_interface_->getCurrentJointValues()[GRIPPER_JOINT_INDEX];
-
-  this->get_logger() = this->get_logger();
+  //angle_ = move_group_interface_->getCurrentJointValues()[GRIPPER_JOINT_INDEX];
 }
 
 void OnExit(int sig)

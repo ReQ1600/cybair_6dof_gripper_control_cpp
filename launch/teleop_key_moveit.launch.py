@@ -1,6 +1,6 @@
 import os
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, LogInfo, TimerAction
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node
@@ -9,17 +9,8 @@ from launch.actions import ExecuteProcess
 from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 
-
 def generate_launch_description():
-
     declared_arguments = []
-    declared_arguments.append(
-        DeclareLaunchArgument(
-            "rviz_config",
-            default_value="panda_moveit_config_demo.rviz",
-            description="RViz configuration file",
-        )
-    )
     
     declared_arguments.append(
         DeclareLaunchArgument(
@@ -33,7 +24,7 @@ def generate_launch_description():
         declared_arguments + [OpaqueFunction(function=launch_setup)]
     )
 
-
+    
 def launch_setup(context, *args, **kwargs):
     use_sim_time = LaunchConfiguration("use_sim_time")
     
@@ -53,12 +44,20 @@ def launch_setup(context, *args, **kwargs):
     ##moje
     moveit_config.moveit_cpp.update({"use_sim_time": use_sim_time.perform(context) == "true"})
     
-    teleop_node = Node(
+    hello_moveit = Node(
         package="cybair_6dof_gripper_control_cpp",
         executable="teleop_gripper_key",
         parameters=[
             moveit_config.to_dict(),
         ],
+        output="screen",
+    )
+    
+    timer_moj = TimerAction(
+        period=1.0,
+        actions=[
+            LogInfo(msg="MoveIt now ready")
+        ]
     )
     
     # Start the actual move_group node/action server
@@ -72,22 +71,6 @@ def launch_setup(context, *args, **kwargs):
     rviz_base = LaunchConfiguration("rviz_config")
     rviz_config = PathJoinSubstitution(
         [FindPackageShare("moveit2_tutorials"), "launch", rviz_base]
-    )
-
-    # RViz
-    rviz_node = Node(
-        package="rviz2",
-        executable="rviz2",
-        name="rviz2",
-        output="log",
-        arguments=["-d", rviz_config],
-        parameters=[
-            moveit_config.robot_description,
-            moveit_config.robot_description_semantic,
-            moveit_config.robot_description_kinematics,
-            moveit_config.planning_pipelines,
-            moveit_config.joint_limits,
-        ],
     )
 
     # Static TF
@@ -145,15 +128,15 @@ def launch_setup(context, *args, **kwargs):
         arguments=["panda_hand_controller", "-c", "/controller_manager"],
     )
     nodes_to_start = [
-        rviz_node,
         static_tf,
         robot_state_publisher,
         run_move_group_node,
         ros2_control_node,
         joint_state_broadcaster_spawner,
-        arm_controller_spawner,
-        hand_controller_spawner,
-        #teleop_node,
+        #arm_controller_spawner,
+        #hand_controller_spawner,
+        timer_moj,
+        hello_moveit,
     ]
 
     return nodes_to_start
