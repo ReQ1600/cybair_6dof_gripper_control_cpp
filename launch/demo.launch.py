@@ -53,14 +53,6 @@ def launch_setup(context, *args, **kwargs):
     ##moje
     moveit_config.moveit_cpp.update({"use_sim_time": use_sim_time.perform(context) == "true"})
     
-    teleop_node = Node(
-        package="cybair_6dof_gripper_control_cpp",
-        executable="teleop_gripper_key",
-        parameters=[
-            moveit_config.to_dict(),
-        ],
-    )
-    
     # Start the actual move_group node/action server
     run_move_group_node = Node(
         package="moveit_ros_move_group",
@@ -153,7 +145,6 @@ def launch_setup(context, *args, **kwargs):
         joint_state_broadcaster_spawner,
         arm_controller_spawner,
         hand_controller_spawner,
-        #teleop_node,
     ]
 
     return nodes_to_start

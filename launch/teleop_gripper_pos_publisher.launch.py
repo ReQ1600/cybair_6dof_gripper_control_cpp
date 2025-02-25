@@ -43,9 +43,9 @@ def launch_setup(context, *args, **kwargs):
     
     moveit_config.moveit_cpp.update({"use_sim_time": use_sim_time.perform(context) == "true"})
     
-    hello_moveit = Node(
+    gripper_publisher = Node(
         package="cybair_6dof_gripper_control_cpp",
-        executable="teleop_gripper_key",
+        executable="teleop_gripper_publisher",
         parameters=[
             moveit_config.to_dict(),
         ],
@@ -53,7 +53,7 @@ def launch_setup(context, *args, **kwargs):
     )
     
     nodes_to_start = [
-        hello_moveit,
+        gripper_publisher,
     ]
 
     return nodes_to_start
