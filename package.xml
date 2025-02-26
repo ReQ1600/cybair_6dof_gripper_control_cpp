@@ -3,8 +3,8 @@
 <package format="3">
   <name>cybair_6dof_gripper_control_cpp</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="drogowskimateusz8@gmail.com">user</maintainer>
+  <description>Package for controlling cybair 6dof arm's gripper</description>
+  <maintainer email="drogowskimateusz8@gmail.com">Mateusz Drogowski</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
