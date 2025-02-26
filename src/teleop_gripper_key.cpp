@@ -21,7 +21,7 @@ class TeleopGripperKey : public rclcpp::Node
 public:
   TeleopGripperKey() : rclcpp::Node("teleop_gripper_key")
   {
-    publisher_ = this->create_publisher<std_msgs::msg::Float64>(GRIPPER_TOPIC, 10);
+    publisher_ = this->create_publisher<std_msgs::msg::Float64>(GRIPPER_TOPIC, 1);
     timer_ = this->create_wall_timer(20ms, std::bind(&TeleopGripperKey::Loop, this));
   }
 
@@ -30,7 +30,7 @@ public:
 private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
-  double angle_ = 0;
+  double angle_change = 0;
 
 };
 
@@ -48,18 +48,18 @@ void TeleopGripperKey::Loop()
   switch (c)
   {
   case LEFT:
-    angle_ += INCEREMENT_SPEED;
+    angle_change = -INCEREMENT_SPEED;
     publish = true;
     break;
   case RIGHT:
-    angle_ -= INCEREMENT_SPEED;
+    angle_change = INCEREMENT_SPEED;
     publish = true;
     break;
   }
   if (publish)
   {
     auto msg = std_msgs::msg::Float64();
-    msg.data = angle_;
+    msg.data = angle_change;
     publisher_->publish(msg);
     RCLCPP_DEBUG(this->get_logger(), "message published");
     publish = false;
